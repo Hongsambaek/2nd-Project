@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="friend">
+
+	<!-- 친구 목록 전체 조회 -->
+	<select id="getAcceptFnd" resultType="VO.FriendVO">
+		select mem_tag memTag, mem_email memEmail, mem_email2 memEmail2, mem_tag2 memTag2
+		from friend
+		where mem_email2 = #{memEmail} and fnd_dyn = 'N'
+	</select>
+
+	<!-- 친구 검색 -->
+	<select id="searchFriend" parameterType="String"
+		resultType="VO.MemberVO">
+		SELECT MEM_TAG AS memTag, mem_name memName, mem_profile memProfile, mem_email memEmail
+		FROM MEMBER
+		WHERE MEM_TAG LIKE '%'
+		|| #{memTag} || '%'
+		ORDER BY MEM_TAG ASC
+	</select>
+
+	<!-- 친구 요청 -->
+	<insert id="addFriend" parameterType="VO.FriendVO">
+		insert into friend
+		(mem_email, mem_tag, mem_tag2, mem_email2, fnd_dyn, FRIEND_LIST_NUM)
+		values
+		(#{memEmail}, #{memTag1}, #{memTag2}, #{memEmail2}, 'N', (select max(friend_list_num) +1  from friend))
+	</insert>
+
+	<!-- 친구 요청 수락 -->
+	<update id="acceptFriend" parameterType="VO.FriendVO">
+		UPDATE friend
+		SET fnd_dyn
+		= 'Y'
+		WHERE mem_email2 = #{memEmail2} AND mem_email
+		= #{memEmail}
+	</update>
+
+	<!-- 친구 요청 거절 -->
+	<delete id="rejectFriend" parameterType="VO.FriendVO">
+		delete from friend
+		where
+		mem_email2 = #{memEmail2} and mem_email = #{memEmail}
+		and fnd_dyn='N'
+	</delete>
+
+	<!-- 친구 삭제 -->
+	<delete id="deleteFriend" parameterType="VO.FriendVO">
+		delete from friend
+		where
+		fnd_dyn='Y' and FRIEND_LIST_NUM = #{friendListNum} and
+		mem_email = (select mem_email2 as memEmail2
+		from
+		(select mem_email2 from friend
+		where fnd_dyn = 'Y' and ( mem_email = #{memEmail})
+		union
+		select mem_email from friend
+		where fnd_dyn = 'Y' and (mem_email2 = #{memEmail} ))
+		WHERE MEM_EMAIL2 = #{memEmail2})
+		or
+		mem_email2 = (select mem_email2 as memEmail2
+		from
+		(select mem_email2 from friend
+		where fnd_dyn = 'Y' and ( mem_email = #{memEmail})
+		union
+		select mem_email from friend
+		where fnd_dyn = 'Y' and (mem_email2 = #{memEmail} ))
+		WHERE MEM_EMAIL2 = #{memEmail2})
+
+	</delete>
+
+
+</mapper>

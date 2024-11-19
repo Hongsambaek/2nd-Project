@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper   PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="complain">
+
+
+	<select id="getAdminComplain" resultType="VO.ComplainVO">
+	select com_num comNum, com_title comTitle, com_date comDate, com_dyn comDyn, mem_email memEmail, com_ans comAns
+	from complain
+	where mem_email like #{memEmail} || '%'
+	order by com_dyn asc, com_date asc
+	</select>
+	
+	<delete id="removeComplain" parameterType="VO.ComplainVO">
+		delete from complain where com_num = #{comNum}
+	</delete>
+	
+	<select id="getMemComplain" resultType="VO.ComplainVO">
+	select com_num comNum, com_title comTitle, com_date comDate, com_dyn comDyn, mem_email memEmail, com_ans comAns
+	from complain
+	where mem_email = #{memEmail}
+	order by com_date asc
+	</select>
+	
+	<select id="getDetailComplain" resultType="VO.ComplainVO">
+	 select com_title comTitle, com_date comDate, com_dyn comDyn, com_content comContent, com_num comNum, com_ans comAns
+        from complain
+        where com_num = #{comNum}
+	</select> 
+	
+	<insert id="insertComplain" parameterType="VO.ComplainVO">
+	
+	insert into complain(com_num, mem_email, com_title, com_content, com_menu)
+		values (COM_NUM.nextval, #{memEmail}, #{comTitle},  #{comContent}, #{comMenu})
+	
+	</insert>
+	
+	<update id="answerComplain" parameterType="VO.ComplainVO">
+	
+	update complain
+	set com_ans = #{comAns}, com_dyn = 'Y'
+	where com_num = #{comNum}
+	
+	</update>
+</mapper>

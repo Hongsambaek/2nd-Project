@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper   PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="comment">
+<resultMap id="commentMap" type="VO.CommentVO">
+	<result property="commentNum" 		column="COMMENT_NUM"/>
+	<result property="feedNum" 			column="FEED_NUM"/>
+	<result property="commentDate"	 	column="COMMENT_DATE"/>
+	<result property="commentUpdate" 	column="COMMENT_UPDATE"/>
+	<result property="commentContent"	column="COMMENT_CONTENT"/>
+	<result property="commentDlyn"		column="COMMENT_DLYN"/>
+	<result property="memEmail"			column="MEM_EMAIL"/>
+</resultMap>	
+	
+	
+	<select id="getAllComment" resultMap="commentMap" parameterType="VO.CommentVO">
+		select * from "COMMENT" where comment_dlyn != 'Y'
+	</select>
+	
+	<insert id="insertComment" parameterType="VO.CommentVO">
+	    <selectKey keyProperty="commentNum" resultType="int" order="BEFORE">
+	        SELECT COMMENT_SEQ.NEXTVAL FROM DUAL
+	    </selectKey>
+	
+	    INSERT INTO "COMMENT" (
+	        COMMENT_NUM, 
+	        FEED_NUM, 
+	        COMMENT_CONTENT, 
+	        COMMENT_DATE,
+	        MEM_EMAIL
+	    ) VALUES (
+	        #{commentNum}, 
+	        #{feedNum}, 
+	        #{commentContent}, 
+	        (SELECT TO_CHAR(SYSDATE, 'YYYY-MM-DD PM HH:MI:SS') FROM DUAL), 
+	        #{memEmail}
+	    )
+	</insert>
+	
+	<update id="updateComment" parameterType="VO.CommentVO">
+		update "COMMENT" set comment_content = #{commentContent}, commentUpdate = 'Y', commentDate = (SELECT TO_CHAR(SYSDATE, 'YYYY-MM-DD PM HH:MI:SS') FROM DUAL)
+	</update>
+	
+	<update id="deleteComment" parameterType="VO.CommentVO">
+		update "COMMENT" set comment_dlyn = 'Y', comment_date = TO_CHAR(SYSDATE, 'YYYY-MM-DD PM HH:MI:SS') AS COMMENT_DATE FROM DUAL))
+	</update>
+	
+</mapper>

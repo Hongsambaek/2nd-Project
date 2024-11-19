@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper   PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="fnd">
+
+
+	<select id="getFnd" resultType="VO.FriendVO">
+
+		(select aa.mem_email2 as memEmail2
+			from
+			(select mem_email2 from friend 
+			where fnd_dyn = 'Y' and ( mem_email = #{memEmail})
+			union
+			select mem_email from friend 
+			where fnd_dyn = 'Y' and (mem_email2 = #{memEmail} )) aa left outer join (select b.*
+			from (select mem_email2, max(msg_date)as msg_date from MESSAGE
+			where mem_email = #{memEmail}
+			group by mem_email2) a, message b
+			where a.msg_date = b.msg_date ) bb on aa.mem_email2 = bb.mem_email2)
+			order by msg_date desc
+
+
+	</select>
+
+
+</mapper>

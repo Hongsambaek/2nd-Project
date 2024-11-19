@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper   PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="message">
+<resultMap id="msgMap" type="VO.MessageVO">
+	<result property="msgNum" column="MSG_NUM"/>
+	<result property="memEmail2" column="MEM_EMAIL2"/>
+	<result property="memEmail" column="MEM_EMAIL"/>
+	<result property="msgContent" column="MSG_CONTENT"/>
+	<result property="fileId" column="FILE_ID"/>
+	<result property="msgDate" column="MSG_DATE"/>
+</resultMap>	
+	
+	
+	<select id="getMessage" resultMap="msgMap" >
+	 select * from        
+    (SELECT m.mem_email, m.msg_content, m.mem_email2, m.msg_date
+	FROM message m
+	WHERE (m.mem_email = #{memEmail} AND m.mem_email2 =  #{memEmail2})
+	UNION
+	SELECT m.mem_email, m.msg_content, m.mem_email2, m.msg_date
+	FROM message m
+	WHERE (m.mem_email = #{memEmail2} AND m.mem_email2 =  #{memEmail}))
+	<where>
+	<if test='msgDate != null '>
+		and msg_date > #{msgDate}
+	</if>
+	</where>
+    ORDER BY msg_date ASC
+	
+	</select>
+	
+	<insert id="sendMessage" parameterType="VO.MessageVO">
+	insert into message(msg_num, mem_email, mem_email2, msg_content)
+	values((select MAX(msg_num) +1 from message), #{memEmail}, #{memEmail2}, #{msgContent})
+	
+	</insert>
+	
+	
+	<select id="recentMessage" resultMap="msgMap" parameterType="Map">
+		select * from
+		((select aa.mem_email2 , nvl(bb.msg_content,' ') msg_content , nvl(bb.msg_date,'1999/07/23') msg_date
+			from
+			(select mem_email2 from friend 
+			where fnd_dyn = 'Y' and ( mem_email = #{memEmail})
+			union
+			select mem_email from friend 
+			where fnd_dyn = 'Y' and (mem_email2 = #{memEmail} )) aa left outer join (select b.*
+			from (select mem_email2, max(msg_date)as msg_date from MESSAGE
+			where mem_email = #{memEmail}
+			group by mem_email2) a, message b
+			where a.msg_date = b.msg_date ) bb on aa.mem_email2 = bb.mem_email2))
+			<where>
+				<if test="msgDate != null">
+					and msg_date > #{msgDate}
+				</if>
+			</where>
+			order by msg_date desc
+	</select>
+</mapper>

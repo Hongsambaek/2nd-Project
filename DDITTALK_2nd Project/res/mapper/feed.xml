@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper   PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="feed">
+	<resultMap type="VO.FeedVO" id="feedMap">
+		<id column="FEED_NUM" 			property="feedNum"/>
+		<result column="ATCH_FILE_ID" 	property="atchFileId"/>
+		<result column="MEM_EMAIL" 		property="memEmail"/>
+		<result column="FEED_MEM_NUM" 	property="feedMemNum"/>
+		<result column="FEED_CONTENT" 	property="feedContent"/>
+		<result column="FEED_DATE"		property="feedDate"/>
+		<result column="FEED_DISPLAY" 	property="feedDisplay"/>
+		<result column="FEED_ADV" 		property="feedAdv"/>
+		<result column="FEED_DYN"		property="feedDyn"/>
+		<result column="FEED_LIKE" 		property="feedLike"/>
+		<result column="RNUM" 			property="rnum"/>
+	</resultMap>
+
+	<insert id="feedInsert" parameterType="VO.FeedVO">
+
+		<selectKey keyProperty="feedNum" resultType="int" order="BEFORE">
+			SELECT SEQ_FEED.NEXTVAL FROM DUAL
+		</selectKey>
+
+		insert into feed (FEED_NUM, ATCH_FILE_ID, MEM_EMAIL, FEED_CONTENT,
+		FEED_DISPLAY, FEED_LIKE, FEED_MEM_NUM, FEED_DATE)
+		values (#{feedNum}, #{atchFileId}, #{memEmail}, #{feedContent}, #{feedDisplay}, 0, (SELECT COUNT(*)+1 FROM FEED WHERE MEM_EMAIL = #{memEmail}), (SELECT TO_CHAR(SYSDATE, 'YYYY-MM-DD PM HH:MI:SS') AS FEED_DATE FROM DUAL))
+		
+	</insert>
+	
+	<select id="feedDetail" resultType="VO.FeedVO" resultMap="feedMap">
+		select * from feed where feed_num = #{feedNum}
+	</select>
+	
+	<select id="feedCounter" resultType="int">
+		select count(*) as feedCnt from feed
+	</select>
+	
+	<select id="openFeedList" resultType="VO.FeedVO" resultMap="feedMap">
+	  	select A.* from( select ROWNUM as RNUM, B.* from 
+		(select * from feed where feed_dyn != 'Y' and feed_display ='공개' order by feed_num desc)B
+		<![CDATA[where ROWNUM <= #{end})A where A.RNUM >= #{start}]]> 
+	</select>
+	
+	<select id="friendFeedList" resultType="VO.FeedVO" resultMap="feedMap">
+		select A.* from( select ROWNUM as RNUM, B.* from 
+		(select * from feed where feed_dyn != 'Y' and mem_email = #{memEmail} and feed_display ='공개' or feed_display = '친구')B
+		<![CDATA[where ROWNUM <= #{end})A where A.RNUM >= #{start}]]>  
+	</select>
+	
+	<select id="bookFeedList" resultType="VO.FeedVO" resultMap="feedMap">
+		select C.* from 
+		(select A.* from( select ROWNUM as RNUM, B.* from 
+		(select * from feed where feed_dyn != 'Y' and feed_display ='공개')B
+		<![CDATA[where ROWNUM <= #{end})A where A.RNUM >= #{start}]]>) C, BOOKMARK D WHERE C.FEED_NUM = D.FEED_NUM and d.mem_email = #{memEmail}
+	</select>
+  	
+  	<select id="myFeedList" parameterType="VO.FeedVO" resultMap="feedMap">
+  	  		select A.* from(
+  			select ROWNUM AS RNUM, B.* from(
+  				select * from feed where mem_email = #{memEmail}
+				order by FEED_NUM DESC
+			)B
+		<![CDATA[
+ 			where ROWNUM <= #{end}
+		)A
+ 		where A.rnum >= #{start}
+ 		]]>
+  	</select>
+  	
+   	<select id="myBookList" parameterType="VO.FeedVO" resultMap="feedMap">
+ 		select A.* from(
+   		select ROWNUM as RNUM, B.* from (select * from feed 
+    	 where feed_num in (select feed_num from bookmark where mem_email = #{memEmail}) 
+      order by feed_num desc) B
+      <![CDATA[where rownum <= #{end}) A where A.rnum >= #{start}]]>
+  	</select>	
+	
+	<update id="feedDelete" parameterType="int">
+
+		update feed set feed_dyn = 'Y' where feed_num = #{feedNum}
+
+	</update>
+	
+	<update id="feedUpdate" parameterType="VO.FeedVO">
+
+		update feed set feed_content = #{feedContent}, feed_display = #{feedDisplay}, atch_file_id = #{atchFileId}
+		where feed_num = #{feedNum}		
+
+	</update>
+	
+	<select id="feedSearch" resultType="VO.FeedVO" resultMap="feedMap"> 
+		select A.* from(
+  			select ROWNUM AS RNUM, B.* from(
+  				select * from feed where feed_content like '%#' || #{search} || '%'
+				order by FEED_NUM DESC
+			)B
+		<![CDATA[
+ 			where ROWNUM <= #{end}
+		)A
+ 		where A.rnum >= #{start}
+ 		]]>
+	</select>
+	
+	<select id="feedSerchCounter" resultType="int">
+		select count(*) as feedCnt from feed where feed_content like '%#' || #{search} || '%'
+	</select>
+	
+	<select id="likeFinder" resultType ="int">
+		select count(like_num) as likeSum from feed_like where mem_email = #{memEmail} and feed_num = #{feedNum}
+	</select>
+	
+	<insert id="like">
+	
+		<selectKey keyProperty="likeNum" resultType="int" order="BEFORE">
+			SELECT feed_like_seq.NEXTVAL FROM DUAL
+		</selectKey>
+	
+		insert into feed_like (like_num, feed_num, mem_email) values (#{likeNum}, #{feedNum}, #{memEmail})
+		
+	</insert>
+	
+	<delete id="unlike">
+		delete from feed_like where feed_num = #{feedNum} and mem_email = #{memEmail}
+	</delete>
+	
+    <select id="allLikeList" resultType="VO.LikeVO">
+        select feed_num feedNum, mem_email memEmail from feed_like
+    </select>
+
+    <select id="likeSumList" resultType="VO.LikeVO">
+        select feed_num as feedNum, count(like_num) as likeSum from feed_like group by feed_num
+    </select>
+    
+    <insert id="marking">
+    	<selectKey keyProperty="bookmarkNum" resultType="int" order="BEFORE">
+			SELECT bookmark_seq.NEXTVAL FROM DUAL
+		</selectKey>
+		
+		insert into bookmark (bookmark_num, feed_num, mem_email) values (#{bookmarkNum}, #{feedNum}, #{memEmail})
+    </insert>
+    
+    <delete id="unmarking">
+    	delete from bookmark where feed_num = #{feedNum} and mem_email = #{memEmail}
+    </delete>
+
+    <select id="bookmarkList" resultType="VO.BookmarkVO">
+        select feed_num feedNum, mem_email memEmail from bookmark
+    </select>
+
+    <select id="bookMarkFinder" resultType="int">
+		select count(bookmark_num) from bookmark where mem_email = #{memEmail} and feed_num = #{feedNum}
+    </select>
+    
+</mapper>

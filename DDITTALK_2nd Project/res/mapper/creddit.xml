@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper   PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="creddit">
+	<resultMap type="VO.CredditVO" id="credditMap">
+		<id column="CREDDIT_NUM" property="credditNum"/>
+		<result column="CREDDIT_QTY" property="credditQty"/>
+		<result column="CREDDIT_MONEY" property="credditMoney"/>
+	</resultMap>
+
+
+	
+		
+	<select id="credditList" resultMap = "credditMap">
+	
+
+      SELECT * FROM CREDDIT
+
+	
+	</select>
+	
+	
+	
+</mapper>

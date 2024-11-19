@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper   PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="payment">
+	<resultMap type="VO.PaymentVO" id="paymentMap">
+		<id column="MEM_EMAIL" property="memEmail"/>
+		<result column="CREDDIT_NUM" property="credditNum"/>
+		<result column="CREDDIT_QTY" property="credditQty"/>
+		<result column="PAYMENT_NUM" property="paymentNum"/>
+	</resultMap>
+
+	<insert id="pay">
+	
+		<selectKey keyProperty="paymentNum" resultType="int" order="BEFORE">
+			SELECT PAYMENT_SEQ.NEXTVAL FROM DUAL
+		</selectKey>
+		
+	 insert into payment( 
+		CREDDIT_QTY,
+		CREDDIT_NUM,
+		MEM_EMAIL,
+		PAYMENT_NUM
+		) values (
+		#{credditQty}, #{credditNum}, #{memEmail}, #{paymentNum})
+
+		
+	</insert>
+	
+		
+	<select id="paymemtList" resultMap = "paymentMap">
+	
+
+      SELECT * FROM payment
+
+	
+	</select>
+	
+		<select id="getpayment" parameterType = "VO.PaymentVO"  >
+	
+		SELECT CREDDIT_QTY credditQty
+		FROM PAYMENT
+		WHERE MEM_EMAIL = #{memEmail}
+
+	</select>
+	
+	
+	
+</mapper>
